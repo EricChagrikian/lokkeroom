@@ -22,7 +22,7 @@ const pool = new Pool({
 await pool.connect()
 
 // Launching express
-const server = express()
+const app = express()
 
 // Promisify the JWT helpers
 // => transform callback into Promise based function (async)
@@ -30,12 +30,12 @@ const sign = promisify(JWT.sign)
 const verify = promisify(JWT.verify)
 
 // Use the json middleware to parse the request body
-server.use(express.json())
+app.use(express.json())
 
 
-server.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: true }));
 
-server.post('/api/register', async (req, res) => {
+app.post('/api/register', async (req, res) => {
   const { email, nickname, password } = req.body
 
   if (!email || !password || !nickname)
@@ -57,7 +57,7 @@ server.post('/api/register', async (req, res) => {
   }
 })
 
-server.post('/api/login', async (req, res) => {
+app.post('/api/login', async (req, res) => {
   const { email, password } = req.body
 
   if (!email || !password)
@@ -98,7 +98,7 @@ server.post('/api/login', async (req, res) => {
 
 // This middleware will ensure that all subsequent routes include a valid token in the authorization header
 // The 'user' variable will be added to the request object, to be used in the following request listeners
-server.use(async (req, res, next) => {
+app.use(async (req, res, next) => {
   if (!req.headers.authorization) return res.status(401).send('Unauthorized')
 
   try {
@@ -118,20 +118,20 @@ server.use(async (req, res, next) => {
   return res.status(403).send('Invalid token')
 })
 
-server.get('/', (req, res) => {
+app.get('/', (req, res) => {
   res.send({ info: 'Hello '})
 })
 
-server.get('/api/hello', (req, res) => {
+app.get('/api/hello', (req, res) => {
   res.send({ info: 'Hello ' + req.user.nickname })
 })
 
-server.get('/api/users', async (req, res) => {
+app.get('/api/users', async (req, res) => {
   const q = await pool.query('SELECT nickname from users')
   return res.send(q.rows)
 })
 
-server.get('/api/users/:user_id', async (req, res) => {
+app.get('/api/users/:user_id', async (req, res) => {
   const {user_id} = req.params
   const q = await pool.query('SELECT nickname from users WHERE id = $1',[user_id])
   if (q.rowCount === 0) {
@@ -141,12 +141,12 @@ server.get('/api/users/:user_id', async (req, res) => {
 
 })
 
-server.get('/api/lobby', async (req, res) => {
+app.get('/api/lobby', async (req, res) => {
   const q = await pool.query('SELECT name from public.lobby')
   return res.send(q.rows)
 })
 
-server.get('/api/lobby/:lobby_id', async (req, res) => {
+app.get('/api/lobby/:lobby_id', async (req, res) => {
   const {lobby_id} = req.params
   const q = await pool.query('SELECT * from public.lobby WHERE id = $1',[lobby_id])
   if (q.rowCount === 0) {
@@ -155,7 +155,7 @@ server.get('/api/lobby/:lobby_id', async (req, res) => {
   return res.send(q.rows)
 })
 
-server.get('/api/lobby/:lobby_id/messages', async (req, res) => {
+app.get('/api/lobby/:lobby_id/messages', async (req, res) => {
   const {lobby_id} = req.params
   const q = await pool.query('SELECT text from public.messages WHERE lobby_id = $1',[lobby_id])
   if (q.rowCount === 0) {
@@ -165,7 +165,7 @@ server.get('/api/lobby/:lobby_id/messages', async (req, res) => {
   
 })
 
-server.get('/api/lobby/:lobby_id/messages/:message_id', async (req, res) => {
+app.get('/api/lobby/:lobby_id/messages/:message_id', async (req, res) => {
   const {lobby_id} = req.params
   const {message_id} = req.params
   const q = await pool.query('SELECT text from public.messages WHERE lobby_id = $1 AND id = $2',[lobby_id, message_id])
@@ -177,7 +177,7 @@ server.get('/api/lobby/:lobby_id/messages/:message_id', async (req, res) => {
 })
 
 
-server.post('/api/lobby/:lobby_id', async (req, res) => {
+app.post('/api/lobby/:lobby_id', async (req, res) => {
   //ERROR "syntax error at end of input" et avant "null value in column "user_id" violates not-null constraint"
   try {
   const {text} = req.body
@@ -208,7 +208,7 @@ server.post('/api/lobby/:lobby_id', async (req, res) => {
   }
   })
 
-  server.post('/api/lobby/:lobby_id/add-user', async (req, res) => {
+  app.post('/api/lobby/:lobby_id/add-user', async (req, res) => {
     const {user_id} = req.body
     const {lobby_id} = req.params
     
@@ -227,7 +227,7 @@ server.post('/api/lobby/:lobby_id', async (req, res) => {
       }
   })
 
-  server.delete('/api/lobby/:lobby_id/remove-user', async (req, res) => {
+  app.delete('/api/lobby/:lobby_id/remove-user', async (req, res) => {
     const {user_id} = req.body
     const {lobby_id} = req.params
 
@@ -253,7 +253,7 @@ server.post('/api/lobby/:lobby_id', async (req, res) => {
     } 
   })
 
-  server.patch('/api/lobby/:lobby_id/:message_id', async (req, res) => {
+  app.patch('/api/lobby/:lobby_id/:message_id', async (req, res) => {
     const {lobby_id} = req.params
     const {message_id} = req.params
     const {text} = req.body
@@ -277,7 +277,7 @@ server.post('/api/lobby/:lobby_id', async (req, res) => {
     }
   })
 
-  server.delete('/api/lobby/:lobby_id/remove-user', async (req, res) => {
+  app.delete('/api/lobby/:lobby_id/remove-user', async (req, res) => {
     const {user_id} = req.body
     const {lobby_id} = req.params
 
@@ -303,7 +303,7 @@ server.post('/api/lobby/:lobby_id', async (req, res) => {
     } 
   })
 
-  server.delete('/api/lobby/:lobby_id/remove-user', async (req, res) => {
+  app.delete('/api/lobby/:lobby_id/remove-user', async (req, res) => {
     const {user_id} = req.body
     const {lobby_id} = req.params
 
@@ -330,4 +330,4 @@ server.post('/api/lobby/:lobby_id', async (req, res) => {
   })
 
 
-server.listen(process.env.port || 3001, () => console.log('http://localhost:3001'))
+app.listen(process.env.port || 3001, () => console.log('http://localhost:3001'))
