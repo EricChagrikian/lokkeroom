@@ -167,6 +167,7 @@ server.get('/api/lobby/:lobby_id/messages/:message_id', async (req, res) => {
 
 
 server.post('/api/lobby/:lobby_id', async (req, res) => {
+  //ERROR "syntax error at end of input" et avant "null value in column "user_id" violates not-null constraint"
   try {
   const {text} = req.body
   const {lobby_id} = req.params
