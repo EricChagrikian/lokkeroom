@@ -11,7 +11,14 @@ const { Pool } = pg
 // Loading variables from the .env file
 dotenv.config()
 
-const pool = new Pool()
+const pool = new Pool({
+  connectionString:process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+}
+
+)
 await pool.connect()
 
 // Launching express
