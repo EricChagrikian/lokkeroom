@@ -326,4 +326,4 @@ server.post('/api/lobby/:lobby_id', async (req, res) => {
   })
 
 
-server.listen(3001 || process.env.port, () => console.log('http://localhost:3001'))
+server.listen(process.env.port || 3001, () => console.log('http://localhost:3001'))
