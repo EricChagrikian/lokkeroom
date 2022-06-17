@@ -118,6 +118,10 @@ server.use(async (req, res, next) => {
   return res.status(403).send('Invalid token')
 })
 
+server.get('/', (req, res) => {
+  res.send({ info: 'Hello '})
+})
+
 server.get('/api/hello', (req, res) => {
   res.send({ info: 'Hello ' + req.user.nickname })
 })
