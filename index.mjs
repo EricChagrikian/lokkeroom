@@ -11,12 +11,7 @@ const { Pool } = pg
 // Loading variables from the .env file
 dotenv.config()
 
-const pool = new Pool({
-  connectionString:process.env.DB_CONNECTION_STRING,
-  ssl: {
-    rejectUnauthorized: false
-  }
-}
+const pool = new Pool(
 
 )
 await pool.connect()
@@ -180,8 +175,7 @@ app.get('/api/lobby/:lobby_id/messages/:message_id', async (req, res) => {
 app.post('/api/lobby/:lobby_id', async (req, res) => {
   //ERROR "syntax error at end of input" et avant "null value in column "user_id" violates not-null constraint"
   try {
-  const {text, lobby_id, user_id} = req.body
-
+    const {text, lobby_id, user_id} = req.body
   
     const participants = await pool.query('SELECT user_id FROM public.users_in_lobby WHERE user_id=$1 AND lobby_id=$2',[user_id,lobby_id])
     if(participants.rowCount===0){
@@ -229,7 +223,7 @@ app.post('/api/lobby/:lobby_id', async (req, res) => {
     const {user_id} = req.body
     const {lobby_id} = req.params
 
-    const isUserInLobby = await pool.query('SELECT user_id FROM public.users_in_lobby WHERE lobby_id=$1 AND user_id=$2)',[lobby_id, user_id])
+    const isUserInLobby = await pool.query('SELECT user_id FROM public.users_in_lobby WHERE lobby_id=$1 AND user_id=$2',[lobby_id, user_id])
     if(isUserInLobby.rowCount===0){
       res.send('user does not exist')}
     
@@ -238,7 +232,7 @@ app.post('/api/lobby/:lobby_id', async (req, res) => {
       try {
 
         await pool.query(
-          'DELETE * FROM public.users_in_lobby (lobby_id, user_id) WHERE lobby_id=$1 AND user_id=$2',
+          'DELETE FROM public.users_in_lobby WHERE lobby_id=$1 AND user_id=$2',
           [lobby_id, user_id]
         )
     
@@ -288,33 +282,7 @@ app.post('/api/lobby/:lobby_id', async (req, res) => {
       try {
 
         await pool.query(
-          'DELETE * FROM public.users_in_lobby (lobby_id, user_id) WHERE lobby_id=$1 AND user_id=$2',
-          [lobby_id, user_id]
-        )
-    
-        return res.send({ info: 'User succesfully deleted from lobby' })
-      } catch (err) {
-        console.log(err)
-    
-        return res.status(500).send({ error: 'Internal server error' })
-      }
-    } 
-  })
-
-  app.delete('/api/lobby/:lobby_id/remove-user', async (req, res) => {
-    const {user_id} = req.body
-    const {lobby_id} = req.params
-
-    const isUserInLobby = await pool.query('SELECT user_id FROM public.users_in_lobby WHERE lobby_id=$1 AND user_id=$2)',[lobby_id, user_id])
-    if(isUserInLobby.rowCount===0){
-      res.send('user does not exist')}
-    
-    else {
-    
-      try {
-
-        await pool.query(
-          'DELETE * FROM public.users_in_lobby (lobby_id, user_id) WHERE lobby_id=$1 AND user_id=$2',
+          'DELETE FROM public.users_in_lobby WHERE lobby_id=$1 AND user_id=$2',
           [lobby_id, user_id]
         )
     
