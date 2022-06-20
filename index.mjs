@@ -12,7 +12,7 @@ const { Pool } = pg
 dotenv.config()
 
 const pool = new Pool({
-  connectionString:process.env.DATABASE_URL,
+  connectionString:process.env.DB_CONNECTION_STRING,
   ssl: {
     rejectUnauthorized: false
   }
@@ -180,15 +180,13 @@ app.get('/api/lobby/:lobby_id/messages/:message_id', async (req, res) => {
 app.post('/api/lobby/:lobby_id', async (req, res) => {
   //ERROR "syntax error at end of input" et avant "null value in column "user_id" violates not-null constraint"
   try {
-  const {text} = req.body
-  const {lobby_id} = req.params
-  const user_id = req.user.id
-  const addedDate = new Date();
-  const created = addedDate.toString();
+  const {text, lobby_id, user_id} = req.body
+
   
     const participants = await pool.query('SELECT user_id FROM public.users_in_lobby WHERE user_id=$1 AND lobby_id=$2',[user_id,lobby_id])
     if(participants.rowCount===0){
-      res.send('not authorized')}
+      res.send('not authorized')
+      console.log(participants.rows);}
 
     // if (!text) {
     //    return res.status(400).send({ error: 'Invalid message' })
@@ -196,8 +194,8 @@ app.post('/api/lobby/:lobby_id', async (req, res) => {
 
     else {
       const q = await pool.query(
-        'INSERT INTO public.messages (text, author_id, lobby_id, created, edited) VALUES ($1, $2, $3, $4, $5) RETURNING',
-        [text, user_id, lobby_id, created, "\N"])
+        'INSERT INTO public.messages (text, author_id, lobby_id, created, edited) VALUES ($1, $2, $3, now(), now());',
+        [text, user_id, lobby_id])  
       return res.send({ info: 'Text succesfully sent' + q.rows[0] })
     } 
    }
@@ -330,4 +328,4 @@ app.post('/api/lobby/:lobby_id', async (req, res) => {
   })
 
 
-app.listen(process.env.port || 3001, () => console.log('http://localhost:3001'))
+app.listen(process.env.PORT || 3002, () => console.log('http://localhost:3002'))
