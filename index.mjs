@@ -265,25 +265,32 @@ app.post('/api/lobby/:lobby_id', async (req, res) => {
   app.delete('/api/lobby/:lobby_id/remove-user', async (req, res) => {
     const {user_id} = req.body
     const {lobby_id} = req.params
+    const user = req.user.id
 
     const isUserInLobby = await pool.query('SELECT user_id FROM public.users_in_lobby WHERE lobby_id=$1 AND user_id=$2)',[lobby_id, user_id])
     if(isUserInLobby.rowCount===0){
-      res.send('user does not exist')}
+      res.send('user does not exist in lobby')}
     
     else {
-    
-      try {
 
-        await pool.query(
-          'DELETE FROM public.users_in_lobby WHERE lobby_id=$1 AND user_id=$2',
-          [lobby_id, user_id]
-        )
-    
-        return res.send({ info: 'User succesfully deleted from lobby' })
-      } catch (err) {
-        console.log(err)
-    
-        return res.status(500).send({ error: 'Internal server error' })
+      const isUserAdmin = await pool.query('SELECT admin_id FROM public.lobby WHERE id=$1 AND admin_id=$2',[lobby_id, user])
+      if (isUserAdmin.rowCount === 0) {
+        return res.status(404).send({ error: 'User is not admin' })
+      }
+      else {
+        try {
+
+          await pool.query(
+            'DELETE FROM public.users_in_lobby WHERE lobby_id=$1 AND user_id=$2',
+            [lobby_id, user_id]
+          )
+      
+          return res.send({ info: 'User succesfully deleted from lobby' })
+        } catch (err) {
+          console.log(err)
+      
+          return res.status(500).send({ error: 'Internal server error' })
+        }
       }
     } 
   })
