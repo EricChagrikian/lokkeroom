@@ -91,6 +91,10 @@ app.post('/api/login', async (req, res) => {
   }
 })
 
+app.get('/', (req, res) => {
+  res.send({ info: 'Hello '})
+})
+
 // This middleware will ensure that all subsequent routes include a valid token in the authorization header
 // The 'user' variable will be added to the request object, to be used in the following request listeners
 app.use(async (req, res, next) => {
@@ -113,12 +117,8 @@ app.use(async (req, res, next) => {
   return res.status(403).send('Invalid token')
 })
 
-app.get('/', (req, res) => {
-  res.send({ info: 'Hello '})
-})
-
 app.get('/api/hello', (req, res) => {
-  res.send({ info: 'Hello ' + req.user.nickname })
+  res.send({ info: 'Hello ' + req.user.nickname + ' !'})
 })
 
 app.get('/api/users', async (req, res) => {
@@ -173,7 +173,7 @@ app.get('/api/lobby/:lobby_id/messages/:message_id', async (req, res) => {
 
 
 app.post('/api/lobby/:lobby_id', async (req, res) => {
-  //ERROR "syntax error at end of input" et avant "null value in column "user_id" violates not-null constraint"
+
   try {
     const {text, lobby_id, user_id} = req.body
   
@@ -182,9 +182,9 @@ app.post('/api/lobby/:lobby_id', async (req, res) => {
       res.send('not authorized')
       console.log(participants.rows);}
 
-    // if (!text) {
-    //    return res.status(400).send({ error: 'Invalid message' })
-    // }
+    if (!text) {
+        return res.status(400).send({ error: 'Invalid message' })
+    }
 
     else {
       const q = await pool.query(
@@ -245,15 +245,19 @@ app.post('/api/lobby/:lobby_id', async (req, res) => {
     } 
   })
 
-  app.patch('/api/lobby/:lobby_id/:message_id', async (req, res) => {
+  app.patch('/api/lobby/:lobby_id/', async (req, res) => {
     const {lobby_id} = req.params
-    const {message_id} = req.params
+    const {message_id} = req.body
     const {text} = req.body
     const addedDate = new Date();
-    const edited = addedDate.toString();
-    const q = await pool.query('SELECT text from public.messages WHERE lobby_id=$1, message_id=$2',[lobby_id, message_id])
+    const edited = addedDate.toISOString();
+    const userEdit = req.user.id
+    const q = await pool.query('SELECT id, author_id from public.messages WHERE lobby_id=$1 AND id=$2',[lobby_id, message_id])
     if (q.rowCount === 0) {
       return res.status(404).send({ error: 'This message does not exist' })
+    }
+    if(q.rows[0].author_id != userEdit) {
+      return res.status(400).send({ error: 'Invalid user' })
     }
     else {
       if (!text){
@@ -261,8 +265,8 @@ app.post('/api/lobby/:lobby_id', async (req, res) => {
       }
       else {
         await pool.query(
-            'INSERT INTO public.messages (text, author_id, lobby_id, created, edited) WHERE id=$1 VALUE $2 RETURNING',
-            [message_id, edited])
+            'UPDATE public.messages SET text=$1, edited=$2 WHERE id=$3',
+            [text, edited, message_id])
       }
 
       return res.send("Message has been edited !")
