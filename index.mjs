@@ -11,10 +11,21 @@ const { Pool } = pg
 // Loading variables from the .env file
 dotenv.config()
 
-const pool = new Pool(
+const isProduction = process.env.NODE_ENV === "production";
 
+const connectionString = `postgresql://${process.env.PG_USER}:${process.env.PG_PASSWORD}@${process.env.PG_HOST}:${process.env.PG_PORT}/${process.env.PG_DATABASE}`;
+
+const pool = new Pool(
+  {
+    connectionString: isProduction ? process.env.DATABASE_URL : connectionString,
+    ssl: {
+        rejectUnauthorized: false,
+    },
+  }
 )
 await pool.connect()
+
+module.exports = pool;
 
 // Launching express
 const app = express()
