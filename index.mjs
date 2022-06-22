@@ -25,7 +25,7 @@ const pool = new Pool(
 )
 await pool.connect()
 
-module.exports = pool;
+export default pool;
 
 // Launching express
 const app = express()
