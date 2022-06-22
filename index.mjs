@@ -201,7 +201,8 @@ app.post('/api/lobby/', async (req, res) =>{
 app.post('/api/lobby/:lobby_id', async (req, res) => {
 
   try {
-    const {text, lobby_id, user_id} = req.body
+    const {lobby_id} = req.params
+    const {text, user_id} = req.body
   
     const participants = await pool.query('SELECT user_id FROM public.users_in_lobby WHERE user_id=$1 AND lobby_id=$2',[user_id,lobby_id])
     if(participants.rowCount===0){
@@ -212,7 +213,7 @@ app.post('/api/lobby/:lobby_id', async (req, res) => {
         return res.status(400).send({ error: 'Invalid message' })
     }
 
-    else {
+    else {  
       const q = await pool.query(
         'INSERT INTO public.messages (text, author_id, lobby_id, created, edited) VALUES ($1, $2, $3, now(), now());',
         [text, user_id, lobby_id])  
